@@ -27,6 +27,7 @@ import '@pollar/react/styles.css';
 import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
 import { useEffect, useMemo, useState } from 'react';
 import { createCosmosWalletAdapter } from './wallet-adapters/cosmos-wallet/adapter';
+import { AjoProvider } from '@/lib/ajo/AjoContext';
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
@@ -119,7 +120,7 @@ export function AppWalletProvider({
         }}
         adapters={adapters}
       >
-        {children}
+        <AjoProvider>{children}</AjoProvider>
       </PollarProvider>
     </>
   );

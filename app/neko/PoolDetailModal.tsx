@@ -671,7 +671,7 @@ export function PoolDetailModal({
                             typeof v === "number" ? `${v.toFixed(4)}%` : "—",
                             "",
                           ]}
-                          labelFormatter={(v) => new Date(v).toLocaleString()}
+                          labelFormatter={(v) => new Date(v as string | number).toLocaleString()}
                         />
                         <Line
                           type="monotone"

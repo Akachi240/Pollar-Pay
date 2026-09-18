@@ -23,13 +23,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pollar SDK demo",
-  description: "Pollar embedded wallet demo",
+  title: "Pollar Pay",
+  description: "Set the rules once. Let your money follow them.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Pollar Pay",
+  },
 };
 
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 export default async function RootLayout({
