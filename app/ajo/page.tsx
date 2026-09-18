@@ -484,6 +484,97 @@ export default function AjoPage() {
   );
 }
 
+function FundWithNairaModal({ onClose }: { onClose: () => void }) {
+  const [amount, setAmount] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+
+  const handlePay = () => {
+    setStatus('loading');
+    setTimeout(() => {
+      setStatus('success');
+    }, 1500);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-card border border-border rounded-3xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+        
+        <div className="flex justify-between items-center p-5 border-b border-border bg-muted/10">
+          <h3 className="font-extrabold text-lg text-foreground">Fund with Naira</h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/50 hover:bg-muted text-muted-foreground transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-warning/10 text-warning px-2.5 py-1 rounded-md border border-warning/20">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            DEMO / PREVIEW &mdash; No real payment
+          </div>
+
+          {status === 'idle' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold mb-2 text-muted-foreground">Amount in Naira</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-lg">₦</span>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="5,000"
+                    className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl font-bold text-lg focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handlePay}
+                disabled={!amount || Number(amount) <= 0}
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+              >
+                Pay with bank transfer / mobile money
+              </button>
+            </div>
+          )}
+
+          {status === 'loading' && (
+            <div className="py-8 flex flex-col items-center justify-center gap-4 text-center">
+              <svg className="animate-spin w-8 h-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              <p className="font-bold text-primary">Processing demo payment...</p>
+            </div>
+          )}
+
+          {status === 'success' && (
+            <div className="py-4 space-y-4 text-center">
+              <div className="mx-auto w-12 h-12 bg-success/20 text-success rounded-full flex items-center justify-center border border-success/30">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <h4 className="font-extrabold text-xl text-foreground">Demo conversion complete</h4>
+              
+              <div className="bg-muted/10 border border-border rounded-xl p-4 font-mono font-bold space-y-1">
+                <p className="text-lg">₦{amount || '5,000'} &rarr; {(Number(amount || 5000) / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 })} USDC</p>
+                <p className="text-xs text-muted-foreground mt-2">Demo rate: ₦1,000 = 1 USDC</p>
+              </div>
+
+              <button
+                onClick={onClose}
+                className="w-full h-12 rounded-xl border border-border font-bold hover:bg-muted transition-colors mt-4"
+              >
+                Close Demo
+              </button>
+            </div>
+          )}
+        </div>
+        
+        <div className="bg-muted/30 p-4 border-t border-border text-center">
+           <p className="text-[11px] font-bold text-muted-foreground">Demo preview only. No money was transferred or converted.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AjoContributionActions({ 
   activeCircle, 
   contribStatus 
@@ -493,6 +584,7 @@ function AjoContributionActions({
 }) {
   const { recordContribution } = useAjo();
   const [loading, setLoading] = useState(false);
+  const [showNairaModal, setShowNairaModal] = useState(false);
 
   const simulateAll = async () => {
     setLoading(true);
@@ -506,7 +598,7 @@ function AjoContributionActions({
   };
 
   return (
-    <div className="pt-4">
+    <div className="pt-4 space-y-3">
       <button
         onClick={simulateAll}
         disabled={loading}
@@ -514,6 +606,17 @@ function AjoContributionActions({
       >
         {loading ? 'Simulating...' : 'Simulate remaining contributions (Demo)'}
       </button>
+
+      <button
+        onClick={() => setShowNairaModal(true)}
+        className="w-full h-12 inline-flex items-center justify-center rounded-xl bg-success/10 text-success hover:bg-success/20 text-xs sm:text-sm font-bold transition-colors border border-success/20 px-2 text-center"
+      >
+        Fund with Naira (Demo)
+      </button>
+
+      {showNairaModal && (
+        <FundWithNairaModal onClose={() => setShowNairaModal(false)} />
+      )}
     </div>
   );
 }

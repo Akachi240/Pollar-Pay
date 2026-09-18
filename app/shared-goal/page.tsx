@@ -115,6 +115,7 @@ const TOTAL_COLLECTED = SIMULATED_CONTRIBUTORS.reduce((sum, c) => sum + c.amount
 export default function SharedGoalPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(ALL_TEMPLATES[0].id);
   
+  const [goalType, setGoalType] = useState<'fixed_target' | 'family_support'>('fixed_target');
   const [policyName, setPolicyName] = useState(ALL_TEMPLATES[0].defaultName);
   const [purpose, setPurpose] = useState(ALL_TEMPLATES[0].defaultPurpose);
   const [destination, setDestination] = useState(ALL_TEMPLATES[0].defaultDestination);
@@ -256,18 +257,34 @@ export default function SharedGoalPage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-muted-foreground mb-2">Target amount</label>
-                  <div className="relative">
-                    <input 
-                      type="number" 
-                      value={targetAmount}
-                      onChange={(e) => setTargetAmount(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-shadow"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">XLM</span>
-                  </div>
+                  <label className="block text-sm font-semibold text-muted-foreground mb-2">Goal type</label>
+                  <select 
+                    value={goalType}
+                    onChange={(e) => setGoalType(e.target.value as any)}
+                    className="w-full p-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 font-semibold transition-shadow appearance-none"
+                  >
+                    <option value="fixed_target">Fixed Target (Set goal)</option>
+                    <option value="family_support">Family Support (Open-ended)</option>
+                  </select>
                 </div>
 
+                {goalType === 'fixed_target' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-muted-foreground mb-2">Target amount</label>
+                    <div className="relative">
+                      <input 
+                        type="number" 
+                        value={targetAmount}
+                        onChange={(e) => setTargetAmount(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 font-bold transition-shadow"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-sm">XLM</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-muted-foreground mb-2">How should people contribute?</label>
                   <select 
@@ -338,7 +355,9 @@ export default function SharedGoalPage() {
               <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm mb-6">
                 <div>
                   <span className="block text-muted-foreground font-semibold mb-1">Target:</span>
-                  <span className="font-bold">{targetAmount || '0'} XLM</span>
+                  <span className="font-bold">
+                    {goalType === 'fixed_target' ? `${targetAmount || '0'} XLM` : 'No required target'}
+                  </span>
                 </div>
                 <div>
                   <span className="block text-muted-foreground font-semibold mb-1">Current:</span>
@@ -395,54 +414,66 @@ export default function SharedGoalPage() {
               </span>
             </div>
 
-            <div className="mb-6 space-y-2">
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-sm font-semibold text-muted-foreground">Progress</span>
-                <span className="text-sm font-semibold text-muted-foreground">Target</span>
+            {goalType === 'fixed_target' ? (
+              <div className="mb-6 space-y-2">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-sm font-semibold text-muted-foreground">Progress</span>
+                  <span className="text-sm font-semibold text-muted-foreground">Target</span>
+                </div>
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-2xl font-bold text-foreground">{TOTAL_COLLECTED} XLM</span>
+                  <span className="text-xl font-bold text-muted-foreground">{targetAmount || '0'} XLM</span>
+                </div>
+                <div className="w-full bg-border rounded-full h-3 overflow-hidden">
+                  <div className="bg-primary h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
+                </div>
+                <p className="text-xs font-semibold text-muted-foreground text-right">{TOTAL_COLLECTED} of {targetAmount || '0'} raised</p>
               </div>
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-2xl font-bold text-foreground">{TOTAL_COLLECTED} XLM</span>
-                <span className="text-xl font-bold text-muted-foreground">{targetAmount || '0'} XLM</span>
+            ) : (
+              <div className="mb-6 space-y-2">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-sm font-semibold text-muted-foreground">Total Raised</span>
+                </div>
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-2xl font-bold text-foreground">{TOTAL_COLLECTED} XLM</span>
+                </div>
               </div>
-              <div className="w-full bg-border rounded-full h-3 overflow-hidden">
-                <div className="bg-primary h-3 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }}></div>
-              </div>
-            </div>
+            )}
 
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Contribution Report</h4>
               <div className="bg-background rounded-xl border border-border overflow-hidden">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-muted/30 border-b border-border">
-                    <tr>
-                      <th className="px-4 py-3 font-bold text-muted-foreground">Contributor</th>
-                      <th className="px-4 py-3 font-bold text-muted-foreground text-right">Amount</th>
-                      <th className="px-4 py-3 font-bold text-muted-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {SIMULATED_CONTRIBUTORS.map((c, i) => (
-                      <tr key={i} className="hover:bg-muted/10">
-                        <td className="px-4 py-3 font-semibold">{c.name}</td>
-                        <td className="px-4 py-3 font-mono font-medium text-right">{c.amount} XLM</td>
-                        <td className="px-4 py-3 font-medium text-success">Recorded</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="bg-muted/10 p-4 border-t border-border grid grid-cols-3 gap-4 text-xs font-bold text-muted-foreground">
-                  <div>
+                <div className="hidden sm:grid grid-cols-3 bg-muted/30 border-b border-border px-4 py-3 font-bold text-muted-foreground text-sm">
+                  <div>Contributor</div>
+                  <div className="text-right">Amount</div>
+                  <div className="text-right">Status</div>
+                </div>
+                <div className="divide-y divide-border">
+                  {SIMULATED_CONTRIBUTORS.map((c, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 sm:p-4 hover:bg-muted/10 text-sm">
+                      <div className="font-semibold text-foreground truncate max-w-[120px] sm:max-w-none">{c.name}</div>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-1 sm:gap-6 text-right shrink-0">
+                        <div className="font-mono font-medium">{c.amount} XLM</div>
+                        <div className="font-medium text-success text-xs sm:text-sm">Recorded</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-muted/10 p-4 border-t border-border flex flex-col sm:grid sm:grid-cols-3 gap-4 text-xs font-bold text-muted-foreground">
+                  <div className="flex justify-between sm:block">
                     <span className="block mb-1">TOTAL COLLECTED</span>
                     <span className="text-foreground text-sm">{TOTAL_COLLECTED} XLM</span>
                   </div>
-                  <div>
+                  <div className="flex justify-between sm:block">
                     <span className="block mb-1">CONTRIBUTORS</span>
                     <span className="text-foreground text-sm">{SIMULATED_CONTRIBUTORS.length}</span>
                   </div>
-                  <div>
-                    <span className="block mb-1">REMAINING</span>
-                    <span className="text-foreground text-sm">{remaining} XLM</span>
-                  </div>
+                  {goalType === 'fixed_target' && (
+                    <div className="flex justify-between sm:block">
+                      <span className="block mb-1">REMAINING</span>
+                      <span className="text-foreground text-sm">{remaining} XLM</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

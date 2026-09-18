@@ -11,6 +11,10 @@ type FieldDef = {
   destination: string;
   valueLabel?: string;
   destLabel?: string;
+  name: string;
+  pocketType: 'flexible' | 'locked' | 'target';
+  lockedUntil?: string;
+  targetAmount?: string;
 };
 
 type TemplateDef = {
@@ -34,9 +38,9 @@ const TEMPLATE_CATEGORIES: { category: string; templates: TemplateDef[] }[] = [
         type: 'executable',
         defaultName: 'Monthly Money Plan',
         defaultFields: [
-          { type: 'percentage', value: '20', destination: 'Savings', valueLabel: 'How much should go to Savings?' },
-          { type: 'fixed', value: '10', destination: 'Giving', valueLabel: 'How much should go to Giving?' },
-          { type: 'remainder', destination: 'Spending', destLabel: 'Where should the rest go?' }
+          { type: 'percentage', value: '20', destination: 'Savings', name: 'Emergency Fund', pocketType: 'target', valueLabel: 'How much should go to Savings?' },
+          { type: 'fixed', value: '10', destination: 'Giving', name: 'Charity', pocketType: 'flexible', valueLabel: 'How much should go to Giving?' },
+          { type: 'remainder', destination: 'Spending', name: 'Daily Spend', pocketType: 'flexible', destLabel: 'Where should the rest go?' }
         ]
       },
       {
@@ -46,8 +50,8 @@ const TEMPLATE_CATEGORIES: { category: string; templates: TemplateDef[] }[] = [
         type: 'executable',
         defaultName: 'Mum\'s Monthly Support',
         defaultFields: [
-          { type: 'fixed', value: '20', destination: 'Mum', valueLabel: 'How much should be set aside?', destLabel: 'Who should receive it?' },
-          { type: 'remainder', destination: 'My spending', destLabel: 'Where should the rest go?' }
+          { type: 'fixed', value: '20', destination: 'Mum', name: 'Mum Support', pocketType: 'flexible', valueLabel: 'How much should be set aside?', destLabel: 'Who should receive it?' },
+          { type: 'remainder', destination: 'My spending', name: 'My Money', pocketType: 'flexible', destLabel: 'Where should the rest go?' }
         ]
       }
     ]
@@ -127,8 +131,8 @@ const TEMPLATE_CATEGORIES: { category: string; templates: TemplateDef[] }[] = [
         type: 'executable',
         defaultName: 'Custom Policy',
         defaultFields: [
-          { type: 'percentage', value: '50', destination: 'Goal 1', valueLabel: 'Percentage allocation', destLabel: 'Destination' },
-          { type: 'remainder', destination: 'Remainder', destLabel: 'Where should the rest go?' }
+          { type: 'percentage', value: '50', destination: 'Goal 1', name: 'Main Goal', pocketType: 'target', valueLabel: 'Percentage allocation', destLabel: 'Destination' },
+          { type: 'remainder', destination: 'Remainder', name: 'Leftover', pocketType: 'flexible', destLabel: 'Where should the rest go?' }
         ]
       }
     ]
@@ -176,7 +180,7 @@ export default function PersonalPage() {
   };
 
   const addCustomField = () => {
-    setAllocations([...allocations.slice(0, -1), { type: 'percentage', value: '10', destination: 'Goal', valueLabel: 'Percentage allocation', destLabel: 'Destination' }, allocations[allocations.length - 1]]);
+    setAllocations([...allocations.slice(0, -1), { type: 'percentage', value: '10', destination: 'Goal', name: 'New Pocket', pocketType: 'flexible', valueLabel: 'Percentage allocation', destLabel: 'Destination' }, allocations[allocations.length - 1]]);
   };
 
   return (
@@ -292,43 +296,99 @@ export default function PersonalPage() {
 
                 <div className="space-y-4">
                   {allocations.map((alloc, idx) => (
-                    <div key={idx} className="p-5 rounded-xl bg-background border border-border flex flex-col sm:flex-row sm:items-end gap-4 transition-all duration-300 hover:border-primary/30">
-                      {alloc.type !== 'remainder' && alloc.valueLabel && (
+                    <div key={idx} className="p-5 rounded-xl bg-background border border-border flex flex-col gap-4 transition-all duration-300 hover:border-primary/30">
+                      
+                      <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
-                          <label className="block text-sm font-semibold text-muted-foreground mb-2">{alloc.valueLabel}</label>
-                          <div className="relative w-full">
-                            <input
-                              type="number"
-                              value={alloc.value || ''}
-                              onChange={(e) => handleRuleChange(idx, 'value', e.target.value)}
-                              className="w-full p-3 text-base rounded-xl bg-card border border-border focus:outline-none focus:border-primary font-bold transition-colors"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">
-                              {alloc.type === 'percentage' ? '%' : 'XLM'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {alloc.destLabel && (
-                        <div className="flex-1">
-                          <label className="block text-sm font-semibold text-muted-foreground mb-2">{alloc.destLabel}</label>
+                          <label className="block text-sm font-semibold text-muted-foreground mb-2">Pocket Name</label>
                           <input
                             type="text"
-                            value={alloc.destination}
-                            onChange={(e) => handleRuleChange(idx, 'destination', e.target.value)}
+                            value={alloc.name}
+                            onChange={(e) => handleRuleChange(idx, 'name', e.target.value)}
                             className="w-full p-3 text-base rounded-xl bg-card border border-border focus:outline-none focus:border-primary font-bold transition-colors"
-                            placeholder="Destination name"
+                            placeholder="e.g. Rent, Vacation"
                           />
                         </div>
-                      )}
-                      
-                      {/* Read-only destination if no destLabel is provided but destination exists (e.g., Savings, Giving) */}
-                      {!alloc.destLabel && alloc.destination && (
-                         <div className="hidden">
-                           {/* Hidden because the valueLabel usually contains the destination name naturally for these templates */}
-                         </div>
-                      )}
+                        <div className="flex-1">
+                          <label className="block text-sm font-semibold text-muted-foreground mb-2">Type</label>
+                          <select
+                            value={alloc.pocketType}
+                            onChange={(e) => handleRuleChange(idx, 'pocketType', e.target.value as any)}
+                            className="w-full p-3 text-base rounded-xl bg-card border border-border focus:outline-none focus:border-primary font-bold transition-colors appearance-none"
+                          >
+                            <option value="flexible">Flexible</option>
+                            <option value="locked">Locked</option>
+                            <option value="target">Target</option>
+                          </select>
+                        </div>
+                        
+                        {alloc.pocketType === 'locked' && (
+                          <div className="flex-1">
+                            <label className="block text-sm font-semibold text-muted-foreground mb-2">Lock until</label>
+                            <input
+                              type="date"
+                              value={alloc.lockedUntil || ''}
+                              onChange={(e) => handleRuleChange(idx, 'lockedUntil', e.target.value)}
+                              className="w-full p-3 text-base rounded-xl bg-card border border-border focus:outline-none focus:border-primary font-bold transition-colors"
+                            />
+                          </div>
+                        )}
+                        
+                        {alloc.pocketType === 'target' && (
+                          <div className="flex-1">
+                            <label className="block text-sm font-semibold text-muted-foreground mb-2">Target amount</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                value={alloc.targetAmount || ''}
+                                onChange={(e) => handleRuleChange(idx, 'targetAmount', e.target.value)}
+                                className="w-full p-3 text-base rounded-xl bg-card border border-border focus:outline-none focus:border-primary font-bold transition-colors"
+                                placeholder="e.g. 500"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">XLM</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        {alloc.type !== 'remainder' && alloc.valueLabel && (
+                          <div className="flex-1">
+                            <label className="block text-sm font-semibold text-muted-foreground mb-2">{alloc.valueLabel}</label>
+                            <div className="relative w-full">
+                              <input
+                                type="number"
+                                value={alloc.value || ''}
+                                onChange={(e) => handleRuleChange(idx, 'value', e.target.value)}
+                                className="w-full p-3 text-base rounded-xl bg-card border border-border focus:outline-none focus:border-primary font-bold transition-colors"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">
+                                {alloc.type === 'percentage' ? '%' : 'XLM'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {alloc.destLabel && (
+                          <div className="flex-1">
+                            <label className="block text-sm font-semibold text-muted-foreground mb-2">{alloc.destLabel}</label>
+                            <input
+                              type="text"
+                              value={alloc.destination}
+                              onChange={(e) => handleRuleChange(idx, 'destination', e.target.value)}
+                              className="w-full p-3 text-base rounded-xl bg-card border border-border focus:outline-none focus:border-primary font-bold transition-colors"
+                              placeholder="Destination name"
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Read-only destination if no destLabel is provided but destination exists (e.g., Savings, Giving) */}
+                        {!alloc.destLabel && alloc.destination && (
+                           <div className="hidden">
+                             {/* Hidden because the valueLabel usually contains the destination name naturally for these templates */}
+                           </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                   
@@ -356,17 +416,57 @@ export default function PersonalPage() {
                   </div>
                 ) : (
                   <ul className="space-y-3">
-                    {plan.destinations.map((res, idx) => (
-                      <li key={idx} className="flex justify-between items-center py-3 border-b border-border last:border-0 transition-opacity duration-300">
-                        <span className="font-bold text-foreground text-lg">{res.destination}</span>
-                        <span className="font-mono font-bold text-primary text-lg">{res.amount} XLM</span>
-                      </li>
-                    ))}
+                    {plan.destinations.map((res, idx) => {
+                      const origField = allocations.find(a => a.destination === res.destination);
+                      const pocketName = origField?.name || 'Unnamed Pocket';
+                      const pocketType = origField?.pocketType || 'flexible';
+                      
+                      let badgeColor = 'bg-muted text-muted-foreground';
+                      if (pocketType === 'locked') badgeColor = 'bg-destructive/10 text-destructive';
+                      if (pocketType === 'target') badgeColor = 'bg-primary/10 text-primary';
+                      
+                      return (
+                        <li key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center py-4 border-b border-border last:border-0 transition-opacity duration-300 gap-2">
+                          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                            <div className="flex items-center gap-2 max-w-full">
+                              <span className="font-bold text-foreground text-lg truncate">{pocketName}</span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${badgeColor}`}>
+                                {pocketType}
+                              </span>
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground break-words">
+                              Destination: {res.destination}
+                              {origField && origField.type !== 'remainder' && ` (${origField.value}${origField.type === 'percentage' ? '%' : ' XLM'})`}
+                              {origField && origField.type === 'remainder' && ' (Remainder)'}
+                            </span>
+                            
+                            {pocketType === 'locked' && origField?.lockedUntil && (
+                              <span className="text-xs font-bold text-destructive flex flex-wrap items-center gap-1 mt-1 bg-destructive/10 w-fit max-w-full px-2 py-1 rounded">
+                                <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                <span className="truncate">Locked until {new Date(origField.lockedUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                              </span>
+                            )}
+                            
+                            {pocketType === 'target' && origField?.targetAmount && (
+                              <div className="mt-2 w-full max-w-[200px]">
+                                <div className="flex justify-between items-end mb-1">
+                                  <span className="text-xs font-bold text-primary">{res.amount} of {origField.targetAmount} saved</span>
+                                </div>
+                                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                                  <div className="bg-primary h-1.5 rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min((Number(res.amount) / Math.max(1, Number(origField.targetAmount))) * 100, 100)}%` }}></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-mono font-bold text-primary text-xl sm:text-right shrink-0">{res.amount} XLM</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
 
                 <div className="mt-8 pt-6 border-t border-border">
-                  <p className="text-center text-sm text-muted-foreground font-medium">This is a simulation preview. No funds are moved.</p>
+                  <p className="text-center text-sm text-muted-foreground font-medium">This is a simulation preview. No funds are actually locked or transferred.</p>
                 </div>
               </section>
 
